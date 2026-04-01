@@ -161,7 +161,7 @@ def plot_predictions(models, test_sequences, true_values, scaler):
     
     plt.title('Model Predictions Comparison')
     plt.legend()
-        plt.show()
+    plt.show()
 
 # Visualize results
 plot_predictions(
