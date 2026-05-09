@@ -33,7 +33,7 @@ def fine_tune_model(model: RandomForestRegressor, X_target: np.ndarray, y_target
 def plot_transfer_learning(y_source: np.ndarray, y_target: np.ndarray,
                           pred_source: np.ndarray, pred_target: np.ndarray,
                           output_path: Path):
- """Plot transfer learning results """
+    """Plot transfer learning results """
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     
     axes[0].plot(y_source, label="Actual", color="#4A90A4", linewidth=1.2)

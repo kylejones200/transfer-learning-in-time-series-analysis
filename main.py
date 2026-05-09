@@ -46,7 +46,7 @@ def main():
     X_target = target_features.drop(columns=['target']).values
     y_target = target_features['target'].values
     
-        model = train_source_model(X_source, y_source)
+    model = train_source_model(X_source, y_source)
     pred_source = model.predict(X_source)
     
     if config['model']['fine_tune']:
