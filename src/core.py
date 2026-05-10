@@ -34,17 +34,18 @@ def plot_transfer_learning(y_source: np.ndarray, y_target: np.ndarray,
                           pred_source: np.ndarray, pred_target: np.ndarray,
                           output_path: Path):
     """Plot transfer learning results """
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+                          if plot:
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     
-    axes[0].plot(y_source, label="Actual", color="#4A90A4", linewidth=1.2)
-    axes[0].plot(pred_source, label="Predicted", color="#D4A574", linewidth=1.2)
-    axes[0].legend(loc='best')
+        axes[0].plot(y_source, label="Actual", color="#4A90A4", linewidth=1.2)
+        axes[0].plot(pred_source, label="Predicted", color="#D4A574", linewidth=1.2)
+        axes[0].legend(loc='best')
     
-    axes[1].plot(y_target, label="Actual", color="#4A90A4", linewidth=1.2)
-    axes[1].plot(pred_target, label="Predicted", color="#D4A574", linewidth=1.2)
-    axes[1].legend(loc='best')
+        axes[1].plot(y_target, label="Actual", color="#4A90A4", linewidth=1.2)
+        axes[1].plot(pred_target, label="Predicted", color="#D4A574", linewidth=1.2)
+        axes[1].legend(loc='best')
     
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=100, bbox_inches='tight', facecolor='white')
-    plt.close()
+        plt.tight_layout()
+        plt.savefig(output_path, dpi=100, bbox_inches='tight', facecolor='white')
+        plt.close()
 

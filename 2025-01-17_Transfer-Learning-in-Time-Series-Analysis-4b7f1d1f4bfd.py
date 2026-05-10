@@ -146,22 +146,23 @@ logger.info("\nModel Comparison:")
 logger.info(results)
 
 
-def plot_predictions(models, test_sequences, true_values, scaler):
-    plt.figure(figsize=(15, 6))
+def plot_predictions(models, test_sequences, true_values, scaler, plot: bool = False):
+    if plot:
+        plt.figure(figsize=(15, 6))
     
     # Plot true values
-    plt.plot(scaler.inverse_transform(true_values), 
-             label='Actual', linewidth=2)
+        plt.plot(scaler.inverse_transform(true_values), 
+                 label='Actual', linewidth=2)
     
     # Plot predictions from each model
-    for name, model in models.items():
-        predictions = model.predict(test_sequences)
-        plt.plot(scaler.inverse_transform(predictions), 
-                label=f'{name} Predictions', linestyle='--')
+        for name, model in models.items():
+            predictions = model.predict(test_sequences)
+            plt.plot(scaler.inverse_transform(predictions), 
+                    label=f'{name} Predictions', linestyle='--')
     
-    plt.title('Model Predictions Comparison')
-    plt.legend()
-    plt.show()
+        plt.title('Model Predictions Comparison')
+        plt.legend()
+        plt.show()
 
 # Visualize results
 plot_predictions(
