@@ -113,9 +113,8 @@ class DomainAdapter:
             sequence_orig = self.source_scaler.inverse_transform(sequence)
             # Transform to target scale
             return self.target_scaler.transform(sequence_orig)
-        else:
-            sequence_orig = self.target_scaler.inverse_transform(sequence)
-            return self.source_scaler.transform(sequence_orig)
+        sequence_orig = self.target_scaler.inverse_transform(sequence)
+        return self.source_scaler.transform(sequence_orig)
 
 # Create and use domain adapter
 adapter = DomainAdapter(source_scaler, target_scaler)
