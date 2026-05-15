@@ -1,16 +1,16 @@
 # Description: Short example for Transfer Learning in Time Series Analysis.
 
 
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
 import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 from data_io import read_csv
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.layers import LSTM, Dense, Input
-from tensorflow.keras.models import Model, Sequential
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -20,6 +20,60 @@ logging.basicConfig(
 
 
 # Helper function to create time series sequences
+class _LSTMForecaster(nn.Module):
+    """LSTM forecaster (auto-generated PyTorch replacement for Keras Sequential)."""
+    def __init__(self, n_features: int, hidden: int = 64, output_size: int = 1,
+                 n_layers: int = 3, dropout: float = 0.0):
+        super().__init__()
+        self.lstm = nn.LSTM(n_features, hidden, num_layers=n_layers,
+                            batch_first=True, dropout=dropout if n_layers > 1 else 0)
+        self.drop = nn.Dropout(dropout)
+        self.fc = nn.Linear(hidden, output_size)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out, _ = self.lstm(x)
+        return self.fc(self.drop(out[:, -1, :]))
+
+def _train_torch(model: nn.Module, X_train, y_train, *,
+                 epochs: int = 50, batch_size: int = 32,
+                 lr: float = 0.001, validation_split: float = 0.2,
+                 patience: int = 15) -> nn.Module:
+    """Standard training loop replacing  + model.fit()."""
+    X_t = torch.FloatTensor(X_train)
+    y_t = torch.FloatTensor(y_train)
+    if y_t.dim() == 1:
+        y_t = y_t.unsqueeze(1)
+    n_val = max(1, int(len(X_t) * validation_split))
+    X_val, y_val = X_t[-n_val:], y_t[-n_val:]
+    X_tr, y_tr = X_t[:-n_val], y_t[:-n_val]
+    loader = DataLoader(TensorDataset(X_tr, y_tr), batch_size=batch_size, shuffle=True)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    criterion = nn.MSELoss()
+    best, wait = float("inf"), 0
+    for _ in range(epochs):
+        model.train()
+        for xb, yb in loader:
+            optimizer.zero_grad()
+            criterion(model(xb), yb).backward()
+            optimizer.step()
+        model.eval()
+        with torch.no_grad():
+            val_loss = criterion(model(X_val), y_val).item()
+        if val_loss < best:
+            best, wait = val_loss, 0
+        else:
+            wait += 1
+            if wait >= patience:
+                break
+    return model
+
+
+def _predict_torch(model: nn.Module, X_test) -> "np.ndarray":
+    """Replace model.predict()."""
+    model.eval()
+    with torch.no_grad():
+        return model(torch.FloatTensor(X_test)).numpy()
+
 def create_sequences(data, seq_length):
     sequences = []
     for i in range(len(data) - seq_length):
@@ -49,19 +103,12 @@ def create_base_model(sequence_length, n_features=1):
             Dense(1),
         ]
     )
-    model.compile(optimizer="adam", loss="mse")
-    return model
+        return model
 
 
 # Train base model on source domain
 source_model = create_base_model(24)
-source_model.fit(
-    source_sequences[:-1],
-    source_scaled[24:],
-    epochs=50,
-    batch_size=32,
-    validation_split=0.2,
-)
+_train_torch(source_model, source_sequences[:-1], source_scaled[24:])
 
 
 # Extract features from intermediate layer
@@ -82,8 +129,7 @@ def create_transfer_model(feature_extractor, sequence_length):
     outputs = Dense(1)(x)
 
     model = Model(inputs=inputs, outputs=outputs)
-    model.compile(optimizer="adam", loss="mse")
-    return model
+        return model
 
 
 transfer_model = create_transfer_model(feature_extractor, 24)
@@ -98,18 +144,12 @@ def create_fine_tuning_model(base_model, trainable_layers=1):
 
 
 # Clone source model for fine-tuning
-fine_tune_model = tf.keras.models.clone_model(source_model)
+fine_tune_model = clone_model(source_model)
 fine_tune_model.set_weights(source_model.get_weights())
 fine_tune_model = create_fine_tuning_model(fine_tune_model)
 
 # Fine-tune on target domain
-fine_tune_model.fit(
-    target_sequences[:-1],
-    target_scaled[24:],
-    epochs=20,
-    batch_size=32,
-    validation_split=0.2,
-)
+_train_torch(fine_tune_model, target_sequences[:-1], target_scaled[24:])
 
 
 class DomainAdapter:
@@ -135,9 +175,9 @@ adapted_sequences = adapter.adapt_sequence(source_sequences)
 def evaluate_models(models, test_sequences, test_targets):
     results = {}
     for name, model in models.items():
-        predictions = model.predict(test_sequences)
-        mse = tf.keras.losses.MSE(test_targets, predictions)
-        mae = tf.keras.losses.MAE(test_targets, predictions)
+        predictions = _predict_torch(model, test_sequences)
+        mse = losses.MSE(test_targets, predictions)
+        mae = losses.MAE(test_targets, predictions)
         results[name] = {"MSE": float(mse), "MAE": float(mae)}
     return pd.DataFrame(results).T
 
@@ -163,7 +203,7 @@ def plot_predictions(models, test_sequences, true_values, scaler, plot: bool = F
 
         # Plot predictions from each model
         for name, model in models.items():
-            predictions = model.predict(test_sequences)
+            predictions = _predict_torch(model, test_sequences)
             plt.plot(
                 scaler.inverse_transform(predictions),
                 label=f"{name} Predictions",
