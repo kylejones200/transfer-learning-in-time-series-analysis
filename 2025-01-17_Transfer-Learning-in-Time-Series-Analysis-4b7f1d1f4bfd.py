@@ -103,7 +103,7 @@ def create_base_model(sequence_length, n_features=1):
             Dense(1),
         ]
     )
-        return model
+    return model
 
 
 # Train base model on source domain
@@ -129,7 +129,7 @@ def create_transfer_model(feature_extractor, sequence_length):
     outputs = Dense(1)(x)
 
     model = Model(inputs=inputs, outputs=outputs)
-        return model
+    return model
 
 
 transfer_model = create_transfer_model(feature_extractor, 24)
