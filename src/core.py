@@ -23,7 +23,7 @@ def fine_tune_model(model: RandomForestRegressor, X_target: np.ndarray, y_target
     model.fit(X_target, y_target)
     return model
 
-def plot_transfer_learning(y_source: np.ndarray, y_target: np.ndarray, pred_source: np.ndarray, pred_target: np.ndarray, output_path: Path, plot: bool = False):
+def plot_transfer_learning(y_source: np.ndarray, y_target: np.ndarray, pred_source: np.ndarray, pred_target: np.ndarray, output_path: Path, plot: bool=False):
     """Plot transfer learning results"""
     if not plot:
         return
