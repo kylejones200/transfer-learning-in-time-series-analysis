@@ -1,16 +1,15 @@
 # Description: Short example for Transfer Learning in Time Series Analysis.
 
-
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
 import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import torch
+import torch.nn as nn
 from data_io import read_csv
 from sklearn.preprocessing import MinMaxScaler
+from torch.utils.data import DataLoader, TensorDataset
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -22,11 +21,23 @@ logging.basicConfig(
 # Helper function to create time series sequences
 class _LSTMForecaster(nn.Module):
     """LSTM forecaster (auto-generated PyTorch replacement for Keras Sequential)."""
-    def __init__(self, n_features: int, hidden: int = 64, output_size: int = 1,
-                 n_layers: int = 3, dropout: float = 0.0):
+
+    def __init__(
+        self,
+        n_features: int,
+        hidden: int = 64,
+        output_size: int = 1,
+        n_layers: int = 3,
+        dropout: float = 0.0,
+    ):
         super().__init__()
-        self.lstm = nn.LSTM(n_features, hidden, num_layers=n_layers,
-                            batch_first=True, dropout=dropout if n_layers > 1 else 0)
+        self.lstm = nn.LSTM(
+            n_features,
+            hidden,
+            num_layers=n_layers,
+            batch_first=True,
+            dropout=dropout if n_layers > 1 else 0,
+        )
         self.drop = nn.Dropout(dropout)
         self.fc = nn.Linear(hidden, output_size)
 
@@ -34,10 +45,18 @@ class _LSTMForecaster(nn.Module):
         out, _ = self.lstm(x)
         return self.fc(self.drop(out[:, -1, :]))
 
-def _train_torch(model: nn.Module, X_train, y_train, *,
-                 epochs: int = 50, batch_size: int = 32,
-                 lr: float = 0.001, validation_split: float = 0.2,
-                 patience: int = 15) -> nn.Module:
+
+def _train_torch(
+    model: nn.Module,
+    X_train,
+    y_train,
+    *,
+    epochs: int = 50,
+    batch_size: int = 32,
+    lr: float = 0.001,
+    validation_split: float = 0.2,
+    patience: int = 15,
+) -> nn.Module:
     """Standard training loop replacing  + model.fit()."""
     X_t = torch.FloatTensor(X_train)
     y_t = torch.FloatTensor(y_train)
@@ -73,6 +92,7 @@ def _predict_torch(model: nn.Module, X_test) -> "np.ndarray":
     model.eval()
     with torch.no_grad():
         return model(torch.FloatTensor(X_test)).numpy()
+
 
 def create_sequences(data, seq_length):
     sequences = []
@@ -127,7 +147,6 @@ def create_transfer_model(feature_extractor, sequence_length):
     features = feature_extractor(inputs)
     x = LSTM(16)(features)
     outputs = Dense(1)(x)
-
     model = Model(inputs=inputs, outputs=outputs)
     return model
 
@@ -197,10 +216,8 @@ logger.info(results)
 def plot_predictions(models, test_sequences, true_values, scaler, plot: bool = False):
     if plot:
         plt.figure(figsize=(15, 6))
-
         # Plot true values
         plt.plot(scaler.inverse_transform(true_values), label="Actual", linewidth=2)
-
         # Plot predictions from each model
         for name, model in models.items():
             predictions = _predict_torch(model, test_sequences)

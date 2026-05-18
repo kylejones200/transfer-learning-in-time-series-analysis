@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 
 
-def load_config(config_path: Path = None) -> dict:
+def load_config(config_path: Path | None = None) -> dict:
     """Load configuration from YAML file."""
     if config_path is None:
         config_path = Path(__file__).parent / "config.yaml"
@@ -34,7 +34,6 @@ def main():
         "--output-dir", type=Path, default=None, help="Output directory"
     )
     args = parser.parse_args()
-
     config = load_config(args.config)
     output_dir = (
         Path(args.output_dir)
@@ -42,7 +41,6 @@ def main():
         else Path(config["output"]["figures_dir"])
     )
     output_dir.mkdir(exist_ok=True)
-
     if config["data"]["generate_synthetic"]:
         np.random.seed(config["data"]["seed"])
         source_data = pd.Series(
@@ -55,23 +53,18 @@ def main():
         )
     else:
         raise ValueError("No data source specified")
-
         source_features = create_features(source_data, config["model"]["lag"])
     target_features = create_features(target_data, config["model"]["lag"])
-
     X_source = source_features.drop(columns=["target"]).values
     y_source = source_features["target"].values
     X_target = target_features.drop(columns=["target"]).values
     y_target = target_features["target"].values
-
     model = train_source_model(X_source, y_source)
     pred_source = model.predict(X_source)
-
     if config["model"]["fine_tune"]:
         model = fine_tune_model(model, X_target, y_target)
 
     pred_target = model.predict(X_target)
-
     plot_transfer_learning(
         y_source,
         y_target,
@@ -79,7 +72,6 @@ def main():
         pred_target,
         output_dir / "transfer_learning.png",
     )
-
     logging.info(f"\nAnalysis complete. Figures saved to {output_dir}")
 
 
